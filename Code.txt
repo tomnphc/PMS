@@ -1,0 +1,57 @@
+#include "PMS.h" //Thư viện của cảm biến PMS7003
+#include <Wire.h> //Thư viện giao tiếp I2C sử dụng cho LCD
+#include <LiquidCrystal_I2C.h> //Thư viện LCD I2C
+LiquidCrystal_I2C lcd(0x27, 16, 2); //Gán địa chỉ cho LCDI2C - 16X2
+PMS pms(Serial); 
+PMS::DATA data;
+
+void setup()
+{
+  Serial.begin(9600); // Cấu hình tốc độ truyền (9600bit/s)
+  pinMode(10, OUTPUT); //Cấu hình xuất điện áp cho led
+  pinMode(11, OUTPUT);
+  pinMode(12, OUTPUT);
+  lcd.init(); //Khởi tạo
+  lcd.init(); //Khởi tạo
+  lcd.backlight(); //Bật đèn nền LCD
+  lcd.setCursor(3, 0); //Đặt vị trí con trỏ 
+  lcd.print("Loading...");
+  delay(5000); //Ngưng trạng thái hoạt động để PMS qua giai đoạn lọc mới đầu 
+  lcd.clear(); //Xóa hiển thị trên LCD
+
+}
+void loop()
+{ lcd.setCursor(0, 0);
+  lcd.print("PM 1.0"); //Hiển thị lên LCD
+  lcd.setCursor(0, 1);
+  lcd.print("PM 10.0");
+  if (pms.read(data))  //Kiểm tra với điều kiện đúng, hàm pms.read(data) sẽ trả về một giá trị 0 hoặc 1
+  {
+    lcd.setCursor(8, 0);
+    lcd.print(String(data.PM_AE_UG_1_0)); //String(), ép kiểu về dạng chuỗi để hiển thị lên LCD
+    lcd.setCursor(8, 1);
+    lcd.print(String(data.PM_AE_UG_10_0));
+    if (data.PM_AE_UG_1_0 >= 75 && data.PM_AE_UG_1_0 < 100)  // Hiển thị cảnh báo led dựa trên nồng độ pm1.0
+    { 
+      lcd.setCursor(10,0);
+      lcd.print(" ");
+      digitalWrite(10, LOW);
+      digitalWrite(11, LOW);
+      digitalWrite(12, HIGH);
+    }
+    else if (data.PM_AE_UG_1_0 >= 100)
+    {
+      digitalWrite(10, HIGH);
+      digitalWrite(11, LOW);
+      digitalWrite(12, LOW);
+    }
+    else if (data.PM_AE_UG_1_0 <= 75)
+    { 
+      lcd.setCursor(10,0);
+      lcd.print(" ");
+      digitalWrite(10, LOW);
+      digitalWrite(11, HIGH);
+      digitalWrite(12, LOW);
+    }
+  }
+}
